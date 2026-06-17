@@ -33,8 +33,10 @@ public class OllamaService {
                 ADD_ITEM
                 REMOVE_ITEM
                 SEARCH_PRODUCT
-                CREATE_BILL
+                START_BILL
                 PRINT_BILL
+                OPEN_BILLING_CONTROLS
+                CLOSE_BILLING_CONTROLS
 
                 Schema:
 

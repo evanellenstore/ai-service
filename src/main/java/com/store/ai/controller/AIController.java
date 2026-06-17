@@ -1,0 +1,29 @@
+package com.store.ai.controller;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import com.store.ai.dto.AIRequest;
+import com.store.ai.service.OllamaService;
+
+@RestController
+@RequestMapping("/ai")
+// @CrossOrigin("*")
+public class AIController {
+
+    private final OllamaService ollamaService;
+
+    public AIController(
+            OllamaService ollamaService) {
+        this.ollamaService = ollamaService;
+    }
+
+    @PostMapping("/intent")
+    public String getIntent(
+            @RequestBody AIRequest request) {
+
+        return ollamaService.process(
+                request.getCommand());
+    }
+}

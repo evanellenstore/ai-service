@@ -40,12 +40,16 @@ public class OllamaService {
 
                 Schema:
 
-                {
-                  "intent":"",
-                  "product":"",
-                  "quantity":0,
-                  "unit":""
-                }
+                                {
+                                    "intent":"",
+                                    "productSku":"",
+                                    "product":"",
+                                    "quantity":0,
+                                    "unit":"",
+                                    "price":0,
+                                    "discountAmount":0,
+                                    "total":0
+                                }
 
                 Command:
                 """ + command;

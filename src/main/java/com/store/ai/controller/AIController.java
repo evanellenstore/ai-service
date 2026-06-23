@@ -3,6 +3,7 @@ package com.store.ai.controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.store.ai.dto.AIRequest;
 import com.store.ai.service.OllamaService;
@@ -20,10 +21,11 @@ public class AIController {
     }
 
     @PostMapping("/intent")
-    public String getIntent(
-            @RequestBody AIRequest request) {
-
-        return ollamaService.process(
-                request.getCommand());
+    public String getIntent(@RequestBody AIRequest request, @RequestParam(required = false) String sessionMode) {
+        // We pass the sessionMode flag from the frontend directly to the service layer
+        return ollamaService.processUnified(request.getCommand(), sessionMode);
     }
+
+     
+
 }

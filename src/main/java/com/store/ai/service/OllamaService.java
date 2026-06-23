@@ -1,9 +1,11 @@
 package com.store.ai.service;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
 import java.util.Map;
+
 @Service
 public class OllamaService {
 
@@ -19,94 +21,161 @@ public class OllamaService {
         this.restTemplate = restTemplate;
     }
 
-    public String process(String command) {
+    
 
-        String prompt = this.getPrompt(command);
-
-        Map<String, Object> request = new HashMap<>();
-            request.put("model", model);
-            request.put("prompt", prompt);
-            request.put("stream", false);
-
-        Map<String, Object> options = new HashMap<>();
-             options.put("temperature", 0);
-             request.put("options", options);
-
-        Map response = restTemplate.postForObject(ollamaUrl, request, Map.class);
-
-        return response.get("response").toString();
+    /**
+     * Single entry point that dynamically chooses the correct prompter
+     */
+    public String processUnified(String command, String sessionMode) {
+        String prompt;
+        
+        // If the frontend tells us it is waiting for a confirmation, run the specialized prompt
+        if ("CONFIRM_PACKAGING".equalsIgnoreCase(sessionMode)) {
+            prompt = this.getConfirmationPrompt(command);
+        } else {
+            prompt = this.getPrompt(command);
+        }
+        
+        return executeOllamaCall(prompt);
     }
 
 
+   /**
+    * Helper method to execute the Ollama API call with the given prompt and return the response as a string.
+    * @param prompt The prompt to send to the Ollama API.
+    * @return The response from the Ollama API as a string.
+    */
+    private String executeOllamaCall(String prompt) {
+        Map<String, Object> request = new HashMap<>();
+        request.put("model", model);
+        request.put("prompt", prompt);
+        request.put("stream", false);
+
+        Map<String, Object> options = new HashMap<>();
+        options.put("temperature", 0);
+        request.put("options", options);
+
+        Map<?, ?> response = restTemplate.postForObject(ollamaUrl, request, Map.class);
+        if (response != null && response.get("response") != null) {
+            return response.get("response").toString();
+        }
+        return "{}";
+    }
+
+
+    /** 
+     * Generates a prompt for the standard intent parsing pipeline.
+     * @param command The user's input command.
+     * @return The generated prompt.
+     */
     private String getPrompt(String command) {
+        return """
+            You are a grocery billing assistant.
 
-    return """
-        You are a grocery billing assistant.
+            Return ONLY valid JSON.
 
-        Return ONLY valid JSON.
+            Do not explain.
+            Do not use markdown.
+            Do not use code fences.
 
-        Do not explain.
-        Do not use markdown.
-        Do not use code fences.
+            Allowed intents:
+            ADD_ITEM
+            REMOVE_ITEM
+            SEARCH_PRODUCT
+            START_BILL
+            PRINT_BILL
+            OPEN_BILLING_CONTROLS
+            CLOSE_BILLING_CONTROLS
+            UNKNOWN
 
-        Allowed intents:
+            Schema:
+            {
+              "intent":"",
+              "productSku":"",
+              "productName":"",
+              "qty":0,
+              "unit":""
+            }
 
-        ADD_ITEM
-        REMOVE_ITEM
-        SEARCH_PRODUCT
-        START_BILL
-        PRINT_BILL
-        OPEN_BILLING_CONTROLS
-        CLOSE_BILLING_CONTROLS
-        UNKNOWN
+            Examples:
 
-        Schema:
+            Input:
+            Add 5 kg Atta
+            Output:
+            {
+              "intent":"ADD_ITEM",
+              "productName":"Atta",
+              "qty":5,
+              "unit":"kg"
+            }
 
-        {
-          "intent":"",
-          "productSku":"",
-          "productName":"",
-          "qty":0,
-          "unit":""
-        }
+            Input:
+            Add 2 packets Maggi
+            Output:
+            {
+              "intent":"ADD_ITEM",
+              "productName":"Maggi",
+              "qty":2,
+              "unit":"packet"
+            }
 
-        Examples:
+            Input:
+            Search mustard oil
+            Output:
+            {
+              "intent":"SEARCH_PRODUCT",
+              "productName":"Mustard Oil",
+              "qty":0,
+              "unit":""
+            }
 
-        Input:
-        Add 5 kg Atta
+            Command:
+            """ + command;
+    }
 
-        Output:
-        {
-          "intent":"ADD_ITEM",
-          "productName":"Atta",
-          "qty":5,
-          "unit":"kg"
-        }
+    private String getConfirmationPrompt(String command) {
+        return """
+            You are a packaging clarification assistant for a grocery system.
+            Analyze the user's input and determine if they selected LOOSE or PACKET.
 
-        Input:
-        Add 2 packets Maggi
+            Return ONLY valid JSON.
+            Do not explain.
+            Do not use markdown.
+            Do not use code fences.
 
-        Output:
-        {
-          "intent":"ADD_ITEM",
-          "productName":"Maggi",
-          "qty":2,
-          "unit":"packet"
-        }
+            Schema:
+            {
+              "isLoose": true/false/null
+            }
 
-        Input:
-        Search mustard oil
+            Rules:
+            - Set "isLoose" to true if input means loose or un-packaged.
+            - Set "isLoose" to false if input means packet, container, bag, or boxed packaging.
+            - Set "isLoose" to null if the response is unclear or unrelated.
 
-        Output:
-        {
-          "intent":"SEARCH_PRODUCT",
-          "productName":"Mustard Oil",
-          "qty":0,
-          "unit":""
-        }
+            Examples:
 
-        Command:
-        """ + command;
-}
+            Input:
+            loose
+            Output:
+            {"isLoose": true}
 
+            Input:
+            give me packet
+            Output:
+            {"isLoose": false}
+
+            Input:
+            packet form
+            Output:
+            {"isLoose": false}
+
+            Input:
+            open product
+            Output:
+            {"isLoose": true}
+
+            Command:
+            """ + command;
+    }
 }

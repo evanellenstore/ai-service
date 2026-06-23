@@ -134,6 +134,17 @@ public class OllamaService {
 
 
                 Input:
+                Add 1 litre mustard oil
+                Output:
+                {
+                  "intent":"ADD_ITEM",
+                  "productName":"Mustard Oil",
+                  "qty":1,
+                  "unit":"l"
+                }
+
+
+                Input:
                 Search mustard oil
                 Output:
                 {

@@ -1,11 +1,14 @@
 package com.store.ai.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.store.ai.dto.AIRequest;
+import com.store.ai.dto.EmbeddingRequest;
+import com.store.ai.dto.EmbeddingResponse;
 import com.store.ai.service.OllamaService;
 
 @RestController
@@ -26,6 +29,9 @@ public class AIController {
         return ollamaService.processUnified(request.getCommand(), sessionMode);
     }
 
-     
-
+    @PostMapping("/embeddings")
+    public ResponseEntity<EmbeddingResponse> createEmbedding(@RequestBody EmbeddingRequest request) {
+        EmbeddingResponse response = ollamaService.createEmbedding(request);
+        return ResponseEntity.ok(response);
+    }
 }

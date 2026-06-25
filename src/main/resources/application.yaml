@@ -7,4 +7,6 @@ server:
 
 ollama:
   url: http://localhost:11434/api/generate
-  model: llama3.2:3b    
+  embeddings-url: http://localhost:11434/api/embeddings
+  model: llama3.2:3b  
+  emd-model:  nomic-embed-text

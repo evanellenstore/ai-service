@@ -4,7 +4,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import com.store.ai.dto.EmbeddingRequest;
+import com.store.ai.dto.EmbeddingResponse;
 
 @Service
 public class OllamaService {
@@ -16,6 +19,12 @@ public class OllamaService {
 
     @Value("${ollama.model}")
     private String model;
+
+    @Value("${ollama.embeddings-url}")
+    private String embeddingsUrl;
+
+    @Value("${ollama.emd-model}")
+    private String emdModel;
 
     public OllamaService(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
@@ -38,6 +47,21 @@ public class OllamaService {
         }
 
         return executeOllamaCall(prompt);
+    }
+
+    public EmbeddingResponse createEmbedding(EmbeddingRequest request) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("model", emdModel);
+        payload.put("prompt", request.getPrompt());
+
+        String endpoint = embeddingsUrl;
+        Map<?, ?> response = restTemplate.postForObject(endpoint, payload, Map.class);
+        if (response != null && response.get("embedding") instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Double> embedding = (List<Double>) response.get("embedding");
+            return EmbeddingResponse.builder().embedding(embedding).build();
+        }
+        return EmbeddingResponse.builder().embedding(List.of()).build();
     }
 
     /**

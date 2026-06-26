@@ -34,4 +34,15 @@ public class AIController {
         EmbeddingResponse response = ollamaService.createEmbedding(request);
         return ResponseEntity.ok(response);
     }
+
+
+     @PostMapping("/saveProductEmbedding")
+    public ResponseEntity<EmbeddingResponse> saveProductEmbedding(@RequestBody EmbeddingRequest request) {
+        EmbeddingResponse response = ollamaService.createEmbedding(request);
+        return ResponseEntity.ok(response);
+    }
+
+
+
+
 }

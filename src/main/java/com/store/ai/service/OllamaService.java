@@ -1,5 +1,4 @@
 package com.store.ai.service;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -7,10 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-
 import com.store.ai.dto.EmbeddingRequest;
 import com.store.ai.dto.EmbeddingResponse;
-
 import io.qdrant.client.QdrantClient;
 import io.qdrant.client.WithPayloadSelectorFactory;
 import io.qdrant.client.grpc.Points.ScoredPoint;
@@ -55,6 +52,7 @@ public class OllamaService {
     ObjectMapper mapper = new ObjectMapper();
 
     if ("CONFIRM_PACKAGING".equalsIgnoreCase(sessionMode)) {
+      
       prompt = this.getConfirmationPrompt(command);
       String llmJsonString = executeOllamaCall(prompt);
 
@@ -64,15 +62,16 @@ public class OllamaService {
       // Call our updated type-safe helper
       String matchedIsLooseStr = searchTopProductField(searchContext, "productType");
       // Write it back to the JSON node cleanly as an actual Boolean primitive
-      if("loose".equals(matchedIsLooseStr)) {
+      if ("loose".equals(matchedIsLooseStr)) {
         llmRootNode.put("isLoose", true);
-      } else if("packet".equals(matchedIsLooseStr)) {
+      } else if ("packet".equals(matchedIsLooseStr)) {
         llmRootNode.put("isLoose", false);
       }
       resultJsonString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(llmRootNode);
 
     } else if ("BRAND_SELECTION".equalsIgnoreCase(sessionMode)) {
-        prompt = this.getBrandSelectionPrompt(command);
+       
+      prompt = this.getBrandSelectionPrompt(command);
         String llmJsonString = executeOllamaCall(prompt);
         ObjectNode llmRootNode = (ObjectNode) mapper.readTree(llmJsonString);
         String llmBrand = llmRootNode.get("brand").asString();
@@ -80,7 +79,21 @@ public class OllamaService {
         String matchedBrand = searchTopProductField(llmBrand, "brandName");
         llmRootNode.put("brand", matchedBrand);
         resultJsonString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(llmRootNode);
-      } else {
+
+      } else if("TAKE_PAYMENT".equalsIgnoreCase(sessionMode)) {
+
+        prompt = this.getPaymentIntentPrompt(command);
+        resultJsonString = executeOllamaCall(prompt);
+
+      }else if("WAITING_FOR_MOBILE_CONSENT".equalsIgnoreCase(sessionMode) || "WAITING_FOR_WALLET_CONSENT".equalsIgnoreCase(sessionMode)) {
+
+        prompt = this.getConsentPrompt(command);
+        resultJsonString = executeOllamaCall(prompt);
+
+      }
+      
+      else {
+
       prompt = this.getProductPrompt(command);
       // llm response
       String llmJsonString = executeOllamaCall(prompt);
@@ -92,6 +105,7 @@ public class OllamaService {
         String matchedProductName = searchTopProductField(llMProductName, "name");
         llmRootNode.put("productName", matchedProductName);
         resultJsonString = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(llmRootNode);
+
       } else {
         // Fallback if intent is not ADD_ITEM but you still need to return the raw
         // response
@@ -276,7 +290,11 @@ private String searchTopProductField(String textToEmbed, String payloadKey) {
                 Command:
                 """ + command;
     }
-
+/**
+ * Generates a prompt for the packaging clarification assistant to determine if the user's input indicates loose or packet packaging.   
+ * @param command
+ * @return
+ */
     private String getConfirmationPrompt(String command) {
         return """
                 You are a packaging clarification assistant for a grocery system.
@@ -323,6 +341,79 @@ private String searchTopProductField(String textToEmbed, String payloadKey) {
                 """ + command;
     }
 
+    /**
+     * 
+     * @param command
+     * @return
+     */
+
+    private String getPaymentIntentPrompt(String command) {
+    return """
+            You are an intent classification assistant for a retail billing system.
+
+            Analyze the user's voice input and determine whether the user wants to proceed with payment.
+
+            Return ONLY a raw valid JSON object.
+            Do not add any explanation.
+            Do not wrap the output in markdown.
+
+            Schema:
+            {
+              "intent": "TAKE_PAYMENT | UNKNOWN"
+            }
+
+            Rules:
+            - If the user wants to pay, checkout, bill, complete payment, or collect payment, return TAKE_PAYMENT.
+            - Support Hindi, English, and Hinglish.
+            - If the meaning is unclear, return UNKNOWN.
+
+            Examples:
+
+            Input:
+            Take payment
+            Output:
+            {"intent":"TAKE_PAYMENT"}
+
+            Input:
+            Payment kar do
+            Output:
+            {"intent":"TAKE_PAYMENT"}
+
+            Input:
+            Bill bana do
+            Output:
+            {"intent":"TAKE_PAYMENT"}
+
+            Input:
+            Checkout
+            Output:
+            {"intent":"TAKE_PAYMENT"}
+
+            Input:
+            Pay now
+            Output:
+            {"intent":"TAKE_PAYMENT"}
+
+            Input:
+            UPI se payment le lo
+            Output:
+            {"intent":"TAKE_PAYMENT"}
+
+            Input:
+            Cart dikhao
+            Output:
+            {"intent":"UNKNOWN"}
+
+            User Input:
+            """
+            + command;
+}
+  /**
+   * 
+   * @param command
+   * @return
+   */  
+    
     private String getBrandSelectionPrompt(String command) {
         return """
                 You are a brand selection assistant for a retail billing system.
@@ -358,4 +449,93 @@ private String searchTopProductField(String textToEmbed, String payloadKey) {
                 """
                 + command;
     }
+
+/**
+ * 
+ * @param command
+ * @return
+ */
+
+    private String getConsentPrompt(String command) {
+    return """
+            You are a consent classification assistant for a retail billing system.
+
+            Analyze the user's voice input and determine whether the user is giving consent or rejecting the request.
+
+            Return ONLY a raw valid JSON object.
+            Do not add any explanation.
+            Do not wrap the output in markdown.
+
+            Schema:
+            {
+              "consent": "YES | NO | UNKNOWN"
+            }
+
+            Rules:
+            - Return YES if the user agrees, confirms, accepts, or proceeds.
+            - Return NO if the user declines, rejects, cancels, or refuses.
+            - Support Hindi, English, and Hinglish.
+            - If the meaning is unclear, return UNKNOWN.
+
+            Examples:
+
+            Input:
+            Yes
+            Output:
+            {"consent":"YES"}
+
+            Input:
+            Haan
+            Output:
+            {"consent":"YES"}
+
+            Input:
+            Haan kar do
+            Output:
+            {"consent":"YES"}
+
+            Input:
+            Ok
+            Output:
+            {"consent":"YES"}
+
+            Input:
+            Proceed
+            Output:
+            {"consent":"YES"}
+
+            Input:
+            Nahi
+            Output:
+            {"consent":"NO"}
+
+            Input:
+            No
+            Output:
+            {"consent":"NO"}
+
+            Input:
+            Cancel
+            Output:
+            {"consent":"NO"}
+
+            Input:
+            Mat karo
+            Output:
+            {"consent":"NO"}
+
+            Input:
+            Pata nahi
+            Output:
+            {"consent":"UNKNOWN"}
+
+            Input:
+            Repeat karo
+            Output:
+            {"consent":"UNKNOWN"}
+
+            User Input:
+            """
+            + command;
+}
 }

@@ -87,7 +87,8 @@ public class OllamaService {
 
       }else if("WAITING_FOR_MOBILE_CONSENT".equalsIgnoreCase(sessionMode) 
         || "WAITING_FOR_WALLET_CONSENT".equalsIgnoreCase(sessionMode)
-        || "WAITING_FOR_PAY_CONFIRM".equalsIgnoreCase(sessionMode)
+        || "WAITING_FOR_PAY_CONFIRM".equalsIgnoreCase(sessionMode) 
+        || "CONFIRM_WITHOUTMOBILE".equalsIgnoreCase(sessionMode)
       ) {
 
               prompt = this.getConsentPrompt(command);

@@ -56,7 +56,7 @@ public static String getProductPrompt(String command) {
         - ढाई -> 2.5
 
         Unit Conversion:
-        - kilo, kilogram, kilos, kg, किलो, किलोग्राम -> kg
+        - kilo, kilogram, kilos, kg, किलो, किलोग्राम, केजी -> kg
         - gram, grams, g, ग्राम -> g
         - litre, liter, litres, l, लीटर -> l
         - millilitre, milliliter, ml, मिलीलीटर -> ml
@@ -514,94 +514,307 @@ public static String getConfirmationPrompt(String command) {
                 + command;
     }
 
-/**
- * 
- * @param command
- * @return
- */
+    /**
+     * 
+     * @param command
+     * @return
+     */
 
     public static String getConsentPrompt(String command) {
-    return """
-            You are a consent classification assistant for a retail billing system.
+      return """
+          You are a consent classification assistant for a retail grocery billing system.
 
-            Analyze the user's voice input and determine whether the user is giving consent or rejecting the request.
+          The user may speak in:
+          - English
+          - Hindi
+          - Hinglish
 
-            Return ONLY a raw valid JSON object.
-            Do not add any explanation.
-            Do not wrap the output in markdown.
+          Analyze the user's voice input and determine whether the user is giving consent.
 
-            Schema:
-            {
-              "consent": "YES | NO | UNKNOWN"
-            }
+          Return ONLY a valid JSON object.
 
-            Rules:
-            - Return YES if the user agrees, confirms, accepts, or proceeds.
-            - Return NO if the user declines, rejects, cancels, or refuses.
-            - Support Hindi, English, and Hinglish.
-            - If the meaning is unclear, return UNKNOWN.
+          Do not explain.
+          Do not use markdown.
+          Do not use code fences.
 
-            Examples:
+          Schema:
+          {
+            "consent":"YES|NO|UNKNOWN"
+          }
 
-            Input:
-            Yes
-            Output:
-            {"consent":"YES"}
+          Rules:
 
-            Input:
-            Haan
-            Output:
-            {"consent":"YES"}
+          - Return "YES" if the user agrees, confirms, accepts, allows, or wants to continue.
+          - Return "NO" if the user refuses, rejects, declines, cancels, skips, or does not want to continue.
+          - Return "UNKNOWN" if the response is unrelated, unclear, or consent cannot be determined.
 
-            Input:
-            Haan kar do
-            Output:
-            {"consent":"YES"}
+          YES words (English):
+          yes
+          yeah
+          yep
+          ok
+          okay
+          sure
+          proceed
+          continue
+          confirm
+          go ahead
+          do it
+          accept
+          apply
+          use wallet
 
-            Input:
-            Ok
-            Output:
-            {"consent":"YES"}
+          YES words (Hinglish):
+          haan
+          han
+          ha
+          haa
+          haan ji
+          ji haan
+          theek hai
+          thik hai
+          bilkul
+          zaroor
+          kar do
+          kar dijiye
+          karo
+          chalo
+          chaliye
+          use karo
+          apply karo
+          wallet use karo
+          wallet laga do
 
-            Input:
-            Proceed
-            Output:
-            {"consent":"YES"}
+          YES words (Hindi):
+          हाँ
+          हां
+          जी
+          जी हाँ
+          हाँ जी
+          बिल्कुल
+          ज़रूर
+          ठीक है
+          कर दो
+          कर दीजिए
+          करिए
+          आगे बढ़ो
+          आगे बढ़िए
+          स्वीकार है
+          वॉलेट इस्तेमाल करो
+          वॉलेट लगा दो
+          भुगतान करो
+          पेमेंट करो
 
-            Input:
-            Nahi
-            Output:
-            {"consent":"NO"}
+          NO words (English):
+          no
+          nope
+          cancel
+          stop
+          skip
+          don't
+          do not
+          not now
+          never
+          reject
 
-            Input:
-            No
-            Output:
-            {"consent":"NO"}
+          NO words (Hinglish):
+          nahi
+          nahin
+          na
+          mat karo
+          cancel karo
+          skip karo
+          rehne do
+          chod do
+          chhod do
+          nahi chahiye
+          nahi karna
+          wallet mat lagao
 
-            Input:
-            Cancel
-            Output:
-            {"consent":"NO"}
+          NO words (Hindi):
+          नहीं
+          ना
+          मत
+          मत करो
+          मत कीजिए
+          रहने दो
+          छोड़ दो
+          रद्द करो
+          रद्द कर दो
+          नहीं चाहिए
+          नहीं करना
+          वॉलेट मत लगाओ
+          भुगतान मत करो
 
-            Input:
-            Mat karo
-            Output:
-            {"consent":"NO"}
+          UNKNOWN words:
+          maybe
+          later
+          what
+          hmm
+          pata nahi
+          repeat
+          repeat karo
+          fir se bolo
+          samajh nahi aaya
+          शायद
+          पता नहीं
+          बाद में
+          फिर से बोलो
+          दोबारा बोलो
+          समझ नहीं आया
+          क्या
+          हम्म
 
-            Input:
-            Pata nahi
-            Output:
-            {"consent":"UNKNOWN"}
+          Examples:
 
-            Input:
-            Repeat karo
-            Output:
-            {"consent":"UNKNOWN"}
+          Input:
+          Yes
+          Output:
+          {"consent":"YES"}
 
-            User Input:
-            """
-            + command;
-}
+          Input:
+          Haan
+          Output:
+          {"consent":"YES"}
 
+          Input:
+          Haan ji
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          Ok
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          Proceed
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          Apply wallet
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          हाँ
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          जी हाँ
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          बिल्कुल
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          ठीक है
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          कर दो
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          वॉलेट इस्तेमाल करो
+          Output:
+          {"consent":"YES"}
+
+          Input:
+          No
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          Nahi
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          Cancel
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          Skip
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          Mat karo
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          नहीं
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          मत करो
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          रद्द करो
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          नहीं चाहिए
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          वॉलेट मत लगाओ
+          Output:
+          {"consent":"NO"}
+
+          Input:
+          Maybe
+          Output:
+          {"consent":"UNKNOWN"}
+
+          Input:
+          Pata nahi
+          Output:
+          {"consent":"UNKNOWN"}
+
+          Input:
+          Repeat karo
+          Output:
+          {"consent":"UNKNOWN"}
+
+          Input:
+          Hmm
+          Output:
+          {"consent":"UNKNOWN"}
+
+          Input:
+          पता नहीं
+          Output:
+          {"consent":"UNKNOWN"}
+
+          Input:
+          फिर से बोलो
+          Output:
+          {"consent":"UNKNOWN"}
+
+          Input:
+          समझ नहीं आया
+          Output:
+          {"consent":"UNKNOWN"}
+
+          User Input:
+          """
+          + command;
+    }
 
 }
